@@ -59,7 +59,7 @@ public class Piece {
     //it's up to you how the piece moves, but at the very least the rules should be logical and it should never move off the board!
     //returns an arraylist of squares which are legal to move to
     //please note that your piece must have some sort of logic. Just being able to move to every square on the board is not
-    //going to score any points.
+    //going to score any points. 
     public ArrayList<Square> getLegalMoves(Board b, Square start){
     	return null;
     }
