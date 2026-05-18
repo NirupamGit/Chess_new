@@ -95,13 +95,13 @@ public class Board extends JPanel implements MouseListener, MouseMotionListener 
         board[7][4].put(new WKingPiece(true, RESOURCES_WKING_PNG));
         board[0][4].put(new WKingPiece(false, RESOURCES_BKING_PNG));
 
-        board[0][3].put(new Queen(true, RESOURCES_BQUEEN_PNG));
-        board[7][3].put(new Queen(false, RESOURCES_WQUEEN_PNG));
+        board[0][3].put(new Queen(false, RESOURCES_BQUEEN_PNG));
+        board[7][3].put(new Queen(true, RESOURCES_WQUEEN_PNG));
         
         board[0][1].put(new Knight(false, RESOURCES_BKNIGHT_PNG));
         board[0][6].put(new Knight(false, RESOURCES_BKNIGHT_PNG));
-        board[7][6].put(new Knight(false, RESOURCES_WKNIGHT_PNG));
-        board[7][1].put(new Knight(false, RESOURCES_WKNIGHT_PNG));
+        board[7][6].put(new Knight(true, RESOURCES_WKNIGHT_PNG));
+        board[7][1].put(new Knight(true, RESOURCES_WKNIGHT_PNG));
 
         board[0][0].put(new Rook(false, RESOURCES_BROOK_PNG));
         board[0][7].put(new Rook(false, RESOURCES_BROOK_PNG));
@@ -186,6 +186,11 @@ public class Board extends JPanel implements MouseListener, MouseMotionListener 
 
     @Override
     public void mousePressed(MouseEvent e) {
+        for (Square[] row : board) {
+            for (Square s : row) {
+                s.setBorder(null);
+            }
+        }
         currX = e.getX();
         currY = e.getY();
 
@@ -211,43 +216,24 @@ public class Board extends JPanel implements MouseListener, MouseMotionListener 
     //precondition - the board is initialized and contains a king of either color. The boolean kingColor corresponds to the color of the king we wish to know the status of.
     //postcondition - returns true of the king is in check and false otherwise.
     public boolean isInCheck(boolean color) {
-        // Square kingSquare = null;
-        // // find the king of the given color
-        // for (int r = 0; r < 8; r++) {
-        //     for (int c = 0; c < 8; c++) {
-        //         if (board[r][c].isOccupied()) {
-        //             Piece p = board[r][c].getOccupyingPiece();
-        //             if (p instanceof King || p instanceof WKingPiece) {
-        //                 if (p.getColor() == color) {
-        //                     kingSquare = board[r][c];
-        //                     break;
-        //                 }
-        //             }
-        //         }
-        //     }
-        //     if (kingSquare != null) break;
-        // }
-
-        // if (kingSquare == null) {
-        //     return false; // no king found of that color
-        // }
-
-        // // check every opposing piece's controlled squares to see if any attack the king
-        // for (int r = 0; r < 8; r++) {
-        //     for (int c = 0; c < 8; c++) {
-        //         if (board[r][c].isOccupied()) {
-        //             Piece p = board[r][c].getOccupyingPiece();
-        //             if (p.getColor() != color) {
-        //                 ArrayList<Square> controlled = p.getControlledSquares(board, board[r][c]);
-        //                 if (controlled.contains(kingSquare)) {
-        //                     return true;
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
-
-        return true;
+        for (int row = 0; row<board.length; row++) {
+            for (int col = 0; col<board[row].length; col++) {
+                if (board[row][col].isOccupied() && board[row][col].getOccupyingPiece().getColor()!=color) {//find all pieces of color != color
+                        //for each enemy piece
+                        Piece enemy = board[row][col].getOccupyingPiece();
+                        //ask that piece "what are your controlled squares?"
+                        ArrayList<Square> enemyControl = enemy.getControlledSquares(board, board[row][col]);
+                        //ask each of those controlled squares: "do you contain a "color" king?"
+                        for (int i=0; i<enemyControl.size(); i++) {
+                            enemyControl.get(i).setBorder(BorderFactory.createMatteBorder(3, 3, 3, 3, Color.GREEN));
+                            if(enemyControl.get(i).isOccupied()&& enemyControl.get(i).getOccupyingPiece().getColor()==color&& enemyControl.get(i).getOccupyingPiece() instanceof WKingPiece) {
+                                return true;
+                            }
+                        }
+                }
+            }
+        }
+        return false;
     }
 
     // TO BE IMPLEMENTED!
@@ -261,29 +247,28 @@ public class Board extends JPanel implements MouseListener, MouseMotionListener 
     @Override
     public void mouseReleased(MouseEvent e) {
         Square endSquare = (Square) this.getComponentAt(new Point(e.getX(), e.getY()));
-        for (Square[] row : board) {
-            for (Square s : row) {
-                s.setBorder(null);
-            }
-        }
+        // for (Square[] row : board) {
+        //     for (Square s : row) {
+        //         s.setBorder(null);
+        //     }
+        // }
         // using currPiece
-       
-        if (fromMoveSquare != null && currPiece.getLegalMoves(this, fromMoveSquare).contains(endSquare)) {
+        if (currPiece != null && fromMoveSquare != null && currPiece.getLegalMoves(this, fromMoveSquare).contains(endSquare) && currPiece.getColor() == whiteTurn) {
             fromMoveSquare.setDisplay(true);
-            if(currPiece.getLegalMoves(this, fromMoveSquare).contains(endSquare)) {
-                Piece captured = endSquare.getOccupyingPiece();
-                endSquare.put(currPiece);
-                fromMoveSquare.removePiece();
-            
-            if (isInCheck(whiteTurn)) {
-                fromMoveSquare.put(currPiece);
-                endSquare.put(captured);
+                if(currPiece.getLegalMoves(this, fromMoveSquare).contains(endSquare)) {
+                    Piece captured = endSquare.getOccupyingPiece();
+                    endSquare.put(currPiece);
+                    fromMoveSquare.removePiece();
+                
+                if (isInCheck(whiteTurn)) {
+                    fromMoveSquare.put(currPiece);
+                    endSquare.put(captured);
+                }
+                else {
+                    whiteTurn = !whiteTurn;
+                }
             }
-        }
-            else {
-                whiteTurn = !whiteTurn;
-            }
-            
+           
         }
       
         currPiece = null;
